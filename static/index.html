@@ -1,0 +1,27 @@
+<html>
+	<head>
+		<meta charset="utf-8"/>
+		<style>
+		#log {
+			font-family: monospace;
+			white-space: pre-wrap;
+		}
+		</style>
+		<script src="wasm_exec.js"></script>
+		<script>
+			const go = new Go();
+			const params = new URLSearchParams(window.location.search);
+			const argv = [];
+			for (const [key, value] of params) {
+				argv.push(`-${key}`, value);
+			}
+			go.argv = go.argv.concat(argv);
+			WebAssembly.instantiateStreaming(fetch("main.wasm"), go.importObject).then((result) => {
+				go.run(result.instance);
+			});
+		</script>
+	</head>
+	<body>
+	<output id="log"></output>
+	</body>
+</html>
