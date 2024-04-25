@@ -1,6 +1,7 @@
 package main
 
 import (
+	"os"
 	"archive/zip"
 	"bytes"
 	"errors"
@@ -28,9 +29,7 @@ var (
 )
 
 func init() {
-	flag.StringVar(&guid, "guid", "", "Roblox deployment GUID to retrieve")
-	flag.StringVar(&channel, "channel", "LIVE", "Roblox deployment channel for the GUID")
-	flag.StringVar(&binType, "type", "player", "Roblox BinaryType for the GUID")
+
 }
 
 type BinaryAssembler struct {
@@ -90,27 +89,32 @@ func (h htmlLogWriter) Write(p []byte) (n int, err error) {
 
 func main() {
 	log.SetOutput(&htmlLogWriter{outputHTMLName: "log"})
+	log.SetFlags(0)
+	guid := flag.String("guid", "", "Roblox deployment GUID to retrieve")
+	channel := flag.String("channel", "", "Roblox deployment channel for the GUID")
+	bin := flag.String("type", "WindowsPlayer", "Roblox BinaryType for the GUID")
 	flag.Parse()
 
-	var t cs.BinaryType
-	switch binType {
-	case "player":
-		t = cs.WindowsPlayer
-	case "studio":
-		t = cs.WindowsStudio64
-	default:
-		log.Fatalf("Unsupported binary type %s, must be one of %s",
-			binType, []string{"player", "studio"})
+	if len(os.Args) < 2 {
+		log.Fatalf("%s\n%s", "usage: wholesale?guid=guid[&channel=channel][&type=binaryType]",
+			"example: wholesale?guid=version-1870963560174427&type=WindowsStudio64")
 	}
 
-	if guid == "" {
-		log.Fatalf("GUID required")
+	var t cs.BinaryType
+	switch *bin {
+	case "WindowsPlayer":
+		t = cs.WindowsPlayer
+	case "WindowsStudio64":
+		t = cs.WindowsStudio64
+	default:
+		log.Fatal("Unsupported binary type", binType,
+			"must be either WindowsPlayer or WindowsStudio64")
 	}
 
 	d := rbxbin.Deployment{
 		Type:    t,
-		Channel: channel,
-		GUID:    guid,
+		Channel: *channel,
+		GUID:    *guid,
 	}
 	name := fmt.Sprintf("%s-%s-%s.zip", d.Channel, d.Type, d.GUID)
 
@@ -191,7 +195,7 @@ func (ba *BinaryAssembler) Assemble(pkgs []rbxbin.Package, mirror *rbxbin.Mirror
 
 		dir, ok := dirs[p.Name]
 		if !ok {
-			return errors.New("unhandled package " + p.Name)
+			log.Fatalf("unhandled package %s, was the correct binary type set?", p.Name)
 		}
 		url := ba.m.PackageURL(ba.d, p.Name)
 	
