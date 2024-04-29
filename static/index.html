@@ -2,9 +2,28 @@
 	<head>
 		<meta charset="utf-8"/>
 		<style>
-		#log {
+		body {
 			font-family: monospace;
+			background-color: black;
+			color: whitesmoke;
+		}
+		button {
+			display: inline-block;
+			padding: 2px 6px;
+			border: 0;
+		}
+		#log {
 			white-space: pre-wrap;
+		}
+		.package {
+			display: grid;
+			grid-template-columns: auto 1fr;
+			gap: 1em;
+			align-items: center;
+			padding: 0px;
+		}
+		.package label {
+			width: 20em;
 		}
 		</style>
 		<script src="wasm_exec.js"></script>
@@ -16,12 +35,13 @@
 				argv.push(`-${key}`, value);
 			}
 			go.argv = go.argv.concat(argv);
-			WebAssembly.instantiateStreaming(fetch("main.wasm"), go.importObject).then((result) => {
+			WebAssembly.instantiateStreaming(fetch("wholesale.wasm"), go.importObject).then((result) => {
 				go.run(result.instance);
 			});
 		</script>
 	</head>
 	<body>
+	<div id="packages"></div>
 	<output id="log"></output>
 	</body>
 </html>

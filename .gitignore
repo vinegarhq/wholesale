@@ -1,2 +1,3 @@
-static/main.wasm
-server
+static/wholesale.wasm
+wholesale
+*.zip

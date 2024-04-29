@@ -1,10 +1,15 @@
-wholesale:
-	GOOS=js GOARCH=wasm go build -o static/main.wasm ./cmd/wholesale
+WHOLESALE_WASM = static/wholesale.wasm
 
-server: wholesale
+wholesale:
+	go build -o $@
+
+$(WHOLESALE_WASM):
+	GOOS=js GOARCH=wasm go build -o $@
+
+server: $(WHOLESALE_WASM)
 	go build ./cmd/server
 
 run: server
 	./server
 
-.PHONY: wholesale run server
+.PHONY: wholesale run server $(WHOLESALE_WASM)
