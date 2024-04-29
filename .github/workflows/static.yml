@@ -20,7 +20,7 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Build
-        run: GOOS=js GOARCH=wasm go build -ldflags="-s -w" -o static/main.wasm ./cmd/wholesale
+        run: make wasm
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
