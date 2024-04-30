@@ -14,6 +14,7 @@ import (
 func main() {
 	guid := flag.String("guid", "", "Roblox deployment GUID to retrieve")
 	channel := flag.String("channel", "LIVE", "Roblox deployment channel for the GUID")
+	quiet := flag.Bool("quiet", false, "Display progress information")
 	bin := flag.String("type", "WindowsPlayer", "Roblox BinaryType for the GUID")
 	flag.Parse()
 
@@ -38,7 +39,7 @@ func main() {
 		GUID:    *guid,
 	}
 
-	ba := factory.NewBinaryAssembler(d, &humanResources{})
+	ba := factory.NewBinaryAssembler(d, *quiet, &humanResources{})
 	buf := ba.Run()
 
 	link(buf, fmt.Sprintf(
