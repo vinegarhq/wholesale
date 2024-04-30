@@ -7,7 +7,6 @@ require (
 	github.com/apprehensions/rbxweb v0.0.0-20240329184049-0bdedc184942
 	github.com/cheggaaa/pb/v3 v3.1.5
 	github.com/dustin/go-humanize v1.0.1
-	github.com/klauspost/compress v1.17.8
 )
 
 require (
