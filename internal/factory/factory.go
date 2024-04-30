@@ -1,6 +1,7 @@
 package factory
 
 import (
+	"archive/zip"
 	"bytes"
 	"errors"
 	"fmt"
@@ -14,7 +15,6 @@ import (
 	"time"
 
 	"github.com/apprehensions/rbxbin"
-	"github.com/klauspost/compress/zip"
 )
 
 var mirror = rbxbin.Mirrors[1] // cachefly
@@ -26,6 +26,7 @@ type Progress interface {
 
 type BinaryAssembler struct {
 	d rbxbin.Deployment
+	q bool
 	p Progress
 }
 
@@ -35,11 +36,8 @@ type Package struct {
 	Reader *bytes.Reader
 }
 
-func NewBinaryAssembler(d rbxbin.Deployment, p Progress) *BinaryAssembler {
-	return &BinaryAssembler{
-		d: d,
-		p: p,
-	}
+func NewBinaryAssembler(d rbxbin.Deployment, q bool, p Progress) *BinaryAssembler {
+	return &BinaryAssembler{d: d, q: q, p: p}
 }
 
 func (ba *BinaryAssembler) Run() *bytes.Buffer {
@@ -109,11 +107,26 @@ func (ba *BinaryAssembler) Assemble(pkgs []rbxbin.Package) *bytes.Buffer {
 	close(h)
 	hg.Wait()
 
-	if err := w.Close(); err != nil {
+	if !ba.q {
+		if err := ba.p.Stop(); err != nil {
+			log.Fatal(err)
+		}
+	}
+
+	as, err := w.CreateHeader(&zip.FileHeader{
+		Name:     "AppSettings.xml",
+		Method:   zip.Deflate,
+		Modified: time.Now(),
+	})
+	if err != nil {
 		log.Fatal(err)
 	}
 
-	if err := ba.p.Stop(); err != nil {
+	if _, err := as.Write([]byte(rbxbin.AppSettings)); err != nil {
+		log.Fatal(err)
+	}
+
+	if err := w.Close(); err != nil {
 		log.Fatal(err)
 	}
 
@@ -133,7 +146,12 @@ func (ba *BinaryAssembler) CreateJob(pkg *rbxbin.Package, dir string) (*Package,
 	}
 
 	b := new(bytes.Buffer)
-	r := ba.p.NewBar(int(resp.ContentLength), pkg.Name, b)
+	var r io.Writer
+	if ba.q {
+		r = b
+	} else {
+		r = ba.p.NewBar(int(resp.ContentLength), pkg.Name, b)
+	}
 
 	_, err = io.Copy(r, resp.Body)
 	if err != nil {
