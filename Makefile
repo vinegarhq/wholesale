@@ -1,5 +1,7 @@
 WHOLESALE_WASM = static/wholesale.wasm
 
+all: wholesale
+
 wasm: $(WHOLESALE_WASM)
 
 wholesale:
